@@ -1,0 +1,35 @@
+---
+title: "HW 05: Logistic Regression"
+author: "INSERT NAME HERE"
+date: "INSERT DATE HERE"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning=FALSE,
+                      message=FALSE)
+```
+
+### Load data and packages
+
+```{r load-packages}
+# Fill in packages 
+```
+
+```{r load-data}
+
+```
+
+(Add code chunks, exercise headings, and narrative as needed below. Make sure to use "###" for all exercise headings.)
+
+
+### Question 1
+
+### Question 2
+
+...
+
+
+### Overall
+

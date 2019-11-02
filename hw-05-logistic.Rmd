@@ -1,7 +1,7 @@
 ---
 title: "HW 05: Logistic Regression"
-author: "INSERT NAME HERE"
-date: "INSERT DATE HERE"
+author: "Hannah Wang"
+date: "30 October 2019"
 output: github_document
 ---
 
@@ -14,22 +14,47 @@ knitr::opts_chunk$set(echo = TRUE,
 ### Load data and packages
 
 ```{r load-packages}
-# Fill in packages 
+library(tidyverse)
+library(knitr)
+library(broom)
+library(pROC)
 ```
 
 ```{r load-data}
 
 ```
 
-(Add code chunks, exercise headings, and narrative as needed below. Make sure to use "###" for all exercise headings.)
-
-
 ### Question 1
+```{r odds}
+odds_behind <- (18/20) / (1 - 18/20)
+odds_tied <- (71/90) / (1 - 71/90)
+odds_ahead <- (55/75) / (1 - 55/75)
+
+odds_behind
+odds_tied
+odds_ahead
+```
+
+The odds of a successful penalty kick for games in which the goalkeeper’s team was behind is 9, tied is 3.74, and ahead is 2.75.
+
+```{r odds-ratios}
+odds_behind/odds_tied
+odds_tied/odds_ahead
+```
+
+The odds ratios for successful penalty kicks for behind versus tied is 2.41, and tied versus ahead is 1.36.
 
 ### Question 2
+The odds of children in day care centers getting nightly cough is expected to be, on average, 1.89 times the odds of children in home care getting nightly cough. We are 95% confident that the true odds ratio lies between 1.34 and 1.67, meaning we are 95% confident that the odds of children in day care centers getting nightly cough is 1.34 to 1.67 times the odds of children in home care getting nightly cough.
 
-...
+The odds of children getting a blocked or runny nose without common cold in day care is expected to be, on average, 1.55 times the odds of getting it in home care. We are 95% confident that the true odds ratio lies between 1.07 and 1.61, meaning we are 95% confident that the odds of children getting a blocked or runny nose without common cold in day care is 1.07 to 1.61 times the odds of getting it in home care.
 
+### Question 3
+Holding all else constant, as distance increases by 1 km, we expect the odds of a moth being removed to multiply by a factor of exp(0.018) = 1.02 on average.
+
+Holding all else constant, the odds of a light morph moth being removed is expected, on average, to be exp(0.374) = 1.45 times the odds of a dark moth being removed.
+
+Interaction coefficient??
 
 ### Overall
 

@@ -18,10 +18,11 @@ library(tidyverse)
 library(knitr)
 library(broom)
 library(pROC)
+library(skimr)
 ```
 
 ```{r load-data}
-
+mn08 <- read.csv("data/mn08.csv")
 ```
 
 ### Question 1
@@ -50,11 +51,134 @@ The odds of children in day care centers getting nightly cough is expected to be
 The odds of children getting a blocked or runny nose without common cold in day care is expected to be, on average, 1.55 times the odds of getting it in home care. We are 95% confident that the true odds ratio lies between 1.07 and 1.61, meaning we are 95% confident that the odds of children getting a blocked or runny nose without common cold in day care is 1.07 to 1.61 times the odds of getting it in home care.
 
 ### Question 3
-Holding all else constant, as distance increases by 1 km, we expect the odds of a moth being removed to multiply by a factor of exp(0.018) = 1.02 on average.
+log odds-hat = -1.123 + 0.018 * distance + 0.374 * morphlight - 0.028 * distance:morphlight
 
-Holding all else constant, the odds of a light morph moth being removed is expected, on average, to be exp(0.374) = 1.45 times the odds of a dark moth being removed.
+When distance from Liverpool is 0 and the moth is dark, the log odds of a moth being removed is -1.123.
 
-Interaction coefficient??
+Holding all else constant, as distance from Liverpool increases by 1 km, we expect the log odds of a moth being removed to increase by 0.018.
+
+Holding all else constant, the difference in the log odds of a light moth being removed and the log odds of a dark moth being removed is 0.374.
+
+Holding all else constant, as distance from Liverpool increases by 1 km, we expect the difference in log odds of a light moth being removed and a dark moth being removed to decrase by 0.028.
+
+### Question 4
+When distance from Liverpool is 0 and the moth is dark, the odds of a moth being removed is exp(-1.123) = 0.325.
+
+Holding all else constant, as distance from Liverpool increases by 1 km, we expect the odds of a moth being removed to multiply by a factor of exp(0.018) = 1.02.
+
+Holding all else constant, the odds of a light moth being removed is expected to be exp(0.374) = 1.45 times the odds of a dark moth being removed.
+
+Holding all else constant, as distance from Liverpool increases by 1 km, we expect the odds of a light moth being removed to be exp(-0.028) = 0.972 times the odds of a dark moth being removed.
+
+### Question 5
+log odds = -1.123 + 0.018(7.2) + 0.374(0) - 0.028(0)
+
+The predicted log odds of being removed for a dark moth that is glued to the trunk of a tree 7.2 km from Liverpool is -0.9934.
+
+The predicted odds of being removed for a dark moth that is glued to the trunk of a tree 7.2 km from Liverpool is exp(-0.9934) = 0.3703.
+
+### Question 6
+log odds = -1.123 + 0.018(41.5) + 0.374(1) - 0.028(41.5)
+
+The predicted probability of being removed for a light moth that is glued to the trunk of a tree 41.5 km from Liverpool is -1.164.
+
+### Question 7
+
+#### Introduction
+
+The objective is to fit a logistic model that can be used to predict whether the Democratic candidate will win given county in Minnesota baesd on the characteristics of that county. 
+
+The response variable is categorical, and indicates whether or not Obama won the majority vote (1 is won, 0 is otherwise).
+```{r obama-win}
+mn08 <- mn08 %>%
+  mutate(obama_win = case_when(pct_Obama > 50 ~ 1,
+                               pct_Obama <= 50 ~ 0))
+```
+
+#### Exploratory Data Analysis
+Initially, we can eliminate the variables County, Obama, McCain, pct_Obama. County is just the identifier for the the observations. Obama and McCain are the variables used to calculate the response variable, whether Obama won, so they would directly predict the response. 
+
+Thus, we will combine Obama and McCain to create a new variable `total_votes` to give us more information about the population. 
+```{r totalvotes}
+mn08 <- mn08 %>%
+  mutate(total_votes = Obama + McCain)
+```
+
+```{r skim}
+skim(mn08)
+```
+
+Gini_Index, medAge2007, and pct_native have 40 missing observations, so we should look into eliminating those variables (see if they have high correlations with any other predictor variables).
+
+```{r pairs}
+pairs(data = mn08, obama_win ~ pct_Obama + pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2007 + medAge2000 + Gini_Index + pct_native, lower.panel = NULL)
+```
+
+```{r correlation}
+mn08 %>%
+  select(-obama_win, -County) %>%
+  cor()
+```
+
+From the pairs plot and correlation matrix, we see that:
+medAge2000 and medAge2007 are highly correlated, so we can eliminate medAge2007 because it has a lot of missing observations.
+
+Gini_Index and pct_poverty are highly correlated, so we can eliminate Gini_Index because it has a lot of missing observations.
+
+pct_rural and pct_native are highly correlated, so we can eliminate pct_native because it has a lot of missing observations.
+
+It would be beneficial to eliminate these variables because they are potentially collinear with other predictor variables, which causes biased estimates of the regression parameters. They also have many missing observations (about half the data), which would cause problems in model fitting. 
+
+##### Univariate Analysis
+Created histograms to visualize the distribution of remaining predictor variables.
+```{r histograms}
+ggplot(data = mn08, mapping = aes(x = medHHinc)) + geom_histogram() + labs(title = "Distribution of Median Household Income")
+
+ggplot(data = mn08, mapping = aes(x = unemp_rate)) + geom_histogram() + labs(title = "Distribution of Unemployment Rate")
+
+ggplot(data = mn08, mapping = aes(x = pct_poverty)) + geom_histogram() + labs(title = "Distribution of People Living Below Poverty Line")
+
+ggplot(data = mn08, mapping = aes(x = medAge2000)) + geom_histogram() + labs(title = "Distribution of Median Age in 2000")
+```
+
+The distributions for median household income and unemployment rate are skewed right, while the distributions for people living below poverty line and median age are relatively normally distributed.
+
+##### Bivariate Analysis
+Created box plots to visualize quantitative predictor variables vs. categorical response variable of whether or not Obama won majority vote.
+```{r plots}
+mn08 %>%
+  group_by(obama_win) %>%
+  ggplot(mapping = aes(x = factor(obama_win), y = medHHinc)) + geom_boxplot() + labs(title = "Median Household Income vs. Obama Majority Win", y = "Median Household Income", x = "Obama Majority Win")
+
+mn08 %>%
+  group_by(obama_win) %>%
+  ggplot(mapping = aes(x = factor(obama_win), y = unemp_rate)) + geom_boxplot() + labs(title = "Unemployment Rate vs. Obama Majority Win", y = "Unemployment Rate", x = "Obama Majority Win")
+
+mn08 %>%
+  group_by(obama_win) %>%
+  ggplot(mapping = aes(x = factor(obama_win), y = pct_poverty)) + geom_boxplot() + labs(title = "Percent below Poverty Line vs. Obama Majority Win", y = "Percent below Poverty Line", x = "Obama Majority Win")
+
+mn08 %>%
+  group_by(obama_win) %>%
+  ggplot(mapping = aes(x = factor(obama_win), y = medAge2000)) + geom_boxplot() + labs(title = "Median Age in 2000 vs. Obama Majority Win", y = "Median Age in 2000", x = "Obama Majority Win")
+```
+
+#### Model Fitting
+```{r model}
+full_model <- glm(obama_win ~ pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2000, data = mn08)
+kable(tidy(full_model,conf.int=TRUE),digits=5)
+```
+obama_win-hat = -1.87864 + 0.00026 * pct_rural + 0.00002 * medHHinc - 0.07876 * unemp_rate + 0.07301 * pct_poverty + 0.03443 * medAge2000
+
+```{r backward}
+regfit_backward <- step(full_model, direction = "backward")
+```
+
+```{r final-model}
+final_model <- glm(obama_win ~ unemp_rate + pct_poverty, data = mn08)
+kable(tidy(final_model,conf.int=TRUE),digits=5)
+```
+obama_win-hat = 0.4665 - 0.0706 * unemp_rate + 0.0429 * pct_poverty
 
 ### Overall
 

@@ -80,8 +80,8 @@ care is 1.07 to 1.61 times the odds of getting it in home care.
 log odds-hat = -1.123 + 0.018 \* distance + 0.374 \* morphlight - 0.028
 \* distance:morphlight
 
-When distance from Liverpool is 0 and the moth is dark, the log odds of
-a moth being removed is -1.123.
+If a moth is dark and its distance from Liverpool is 0, the log odds of
+the moth being removed is -1.123.
 
 Holding all else constant, as distance from Liverpool increases by 1 km,
 we expect the log odds of a moth being removed to increase by 0.018.
@@ -90,13 +90,13 @@ Holding all else constant, the difference in the log odds of a light
 moth being removed and the log odds of a dark moth being removed is
 0.374.
 
-Holding all else constant, as distance from Liverpool increases by 1 km,
-we expect the difference in log odds of a light moth being removed and a
-dark moth being removed to decrase by 0.028.
+Holding all else constant, if a moth is light, as distance from
+Liverpool increases by 1 km, we expect the log odds of the moth being
+removed to decrease by 0.01.
 
 ### Question 4
 
-When distance from Liverpool is 0 and the moth is dark, the odds of a
+If a moth is dark and its distance from Liverpool is 0, the odds of the
 moth being removed is exp(-1.123) = 0.325.
 
 Holding all else constant, as distance from Liverpool increases by 1 km,
@@ -107,13 +107,13 @@ Holding all else constant, the odds of a light moth being removed is
 expected to be exp(0.374) = 1.45 times the odds of a dark moth being
 removed.
 
-Holding all else constant, as distance from Liverpool increases by 1 km,
-we expect the odds of a light moth being removed to be exp(-0.028) =
-0.972 times the odds of a dark moth being removed.
+Holding all else constant, if a moth is light, as distance from
+Liverpool increases by 1 km, we expect the odds of a moth being removed
+to multiply by a factor of exp(-0.01) = 0.99.
 
 ### Question 5
 
-log odds = -1.123 + 0.018(7.2) + 0.374(0) - 0.028(0)
+log odds = -1.123 + 0.018(7.2) + 0.374(0) - 0.028(0) = -0.9934
 
 The predicted log odds of being removed for a dark moth that is glued to
 the trunk of a tree 7.2 km from Liverpool is -0.9934.
@@ -123,10 +123,10 @@ trunk of a tree 7.2 km from Liverpool is exp(-0.9934) = 0.3703.
 
 ### Question 6
 
-log odds = -1.123 + 0.018(41.5) + 0.374(1) - 0.028(41.5)
+log odds = -1.123 + 0.018(41.5) + 0.374(1) - 0.028(41.5) = -1.164
 
 The predicted probability of being removed for a light moth that is
-glued to the trunk of a tree 41.5 km from Liverpool is -1.164.
+glued to the trunk of a tree 41.5 km from Liverpool is 0.2379.
 
 ### Question 7
 
@@ -483,7 +483,7 @@ calc_auc(roccurve)$AUC
     ## [1] 0.6449735
 
 From the model, we decide on a threshold probability of 0.479, with a
-false positive rate of 0.4 and a true positive rate of 0.6 because thsi
+false positive rate of 0.4 and a true positive rate of 0.6 because this
 is the point on the ROC curve closest to the top left corner (true
 positive rate of 1).
 

@@ -1,7 +1,7 @@
 ---
 title: "HW 05: Logistic Regression"
 author: "Hannah Wang"
-date: "30 October 2019"
+date: "06 November 2019"
 output: github_document
 ---
 
@@ -51,36 +51,36 @@ The odds of children in day care centers getting nightly cough is expected to be
 The odds of children getting a blocked or runny nose without common cold in day care is expected to be, on average, 1.55 times the odds of getting it in home care. We are 95% confident that the true odds ratio lies between 1.07 and 1.61, meaning we are 95% confident that the odds of children getting a blocked or runny nose without common cold in day care is 1.07 to 1.61 times the odds of getting it in home care.
 
 ### Question 3
-log odds-hat = -1.123 + 0.018 * distance + 0.374 * morphlight - 0.028 * distance:morphlight
+log-odds-hat = -1.123 + 0.018 * distance + 0.374 * morphlight - 0.028 * distance:morphlight
 
-If a moth is dark and its distance from Liverpool is 0, the log odds of the moth being removed is -1.123.
+If a moth is dark and its distance from Liverpool is 0, the log odds of the moth being removed after 24 hours is -1.123.
 
-Holding all else constant, as distance from Liverpool increases by 1 km, we expect the log odds of a moth being removed to increase by 0.018.
+Holding all else constant, as distance from Liverpool increases by 1 km, we expect the log odds of a moth being removed after 24 hours to increase by 0.018.
 
-Holding all else constant, the difference in the log odds of a light moth being removed and the log odds of a dark moth being removed is 0.374.
+Holding all else constant, the difference in the log odds of a light moth being removed and the log odds of a dark moth being removed after 24 hours is 0.374.
 
-Holding all else constant, if a moth is light, as distance from Liverpool increases by 1 km, we expect the log odds of the moth being removed to decrease by 0.01.
+Holding all else constant, if a moth is light, as distance from Liverpool increases by 1 km, we expect the log odds of the moth being removed after 24 hours to decrease by 0.01.
 
 ### Question 4
-If a moth is dark and its distance from Liverpool is 0, the odds of the moth being removed is exp(-1.123) = 0.325.
+If a moth is dark and its distance from Liverpool is 0, the odds of the moth being removed after 24 hours is exp(-1.123) = 0.325.
 
-Holding all else constant, as distance from Liverpool increases by 1 km, we expect the odds of a moth being removed to multiply by a factor of exp(0.018) = 1.02.
+Holding all else constant, as distance from Liverpool increases by 1 km, we expect the odds of a moth being removed after 24 hours to multiply by a factor of exp(0.018) = 1.02.
 
-Holding all else constant, the odds of a light moth being removed is expected to be exp(0.374) = 1.45 times the odds of a dark moth being removed.
+Holding all else constant, the odds of a light moth being removed is expected to be exp(0.374) = 1.45 times the odds of a dark moth being removed after 24 hours.
 
-Holding all else constant, if a moth is light, as distance from Liverpool increases by 1 km, we expect the odds of a moth being removed to multiply by a factor of exp(-0.01) = 0.99.
+Holding all else constant, if a moth is light, as distance from Liverpool increases by 1 km, we expect the odds of a moth being removed after 24 hours to multiply by a factor of exp(-0.01) = 0.99.
 
 ### Question 5
-log odds = -1.123 + 0.018(7.2) + 0.374(0) - 0.028(0) = -0.9934
+log-odds = -1.123 + 0.018(7.2) + 0.374(0) - 0.028(0) = -0.9934
 
 The predicted log odds of being removed for a dark moth that is glued to the trunk of a tree 7.2 km from Liverpool is -0.9934.
 
 The predicted odds of being removed for a dark moth that is glued to the trunk of a tree 7.2 km from Liverpool is exp(-0.9934) = 0.3703.
 
 ### Question 6
-log odds = -1.123 + 0.018(41.5) + 0.374(1) - 0.028(41.5) = -1.164
+log-odds = -1.123 + 0.018(41.5) + 0.374(1) - 0.028(41.5) = -1.164
 
-The predicted probability of being removed for a light moth that is glued to the trunk of a tree 41.5 km from Liverpool is 0.2379.
+The predicted probability of being removed for a light moth that is glued to the trunk of a tree 41.5 km from Liverpool is exp(-1.164)/(1+exp(-1.164)) = 0.2379.
 
 ### Question 7
 
@@ -96,31 +96,35 @@ mn08 <- mn08 %>%
 ```
 
 #### Exploratory Data Analysis
-Initially, we can eliminate the variables County, Obama, McCain, pct_Obama. County is just the identifier for the the observations. Obama and McCain are the variables used to calculate the response variable, whether Obama won, so they would directly predict the response. 
+Initially, we can eliminate the variables County, Obama, McCain, pct_Obama. County is just the identifier for the the observations. Obama, McCain, and pct_Obama are the variables used to calculate the response variable (whether Obama won) so they would directly predict the response.
 
-Thus, we will combine Obama and McCain to create a new variable `total_votes` to give us more information about the population. 
+We will combine Obama and McCain to create a new variable `total_votes` to give us more information about the population. 
 ```{r totalvotes}
 mn08 <- mn08 %>%
   mutate(total_votes = Obama + McCain)
 ```
 
+We use the `skim` function to get a quick overview of the distribution of the remaining variables. 
 ```{r skim}
 skim(mn08)
 ```
 
 Gini_Index, medAge2007, and pct_native have 40 missing observations, so we should look into eliminating those variables (see if they have high correlations with any other predictor variables).
 
+We created a pairs plot and correlation matrix to examine the correlation between the predictor variables and see if there are any potential multicollinearities.
+
 ```{r pairs}
-pairs(data = mn08, obama_win ~ pct_Obama + pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2007 + medAge2000 + Gini_Index + pct_native, lower.panel = NULL)
+pairs(data = mn08, obama_win ~ pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2007 + medAge2000 + Gini_Index + pct_native + total_votes, lower.panel = NULL)
 ```
 
 ```{r correlation}
 mn08 %>%
-  select(-obama_win, -County) %>%
+  select(-obama_win, -County, -Obama, -McCain) %>%
   cor()
 ```
 
 From the pairs plot and correlation matrix, we see that:
+
 medAge2000 and medAge2007 are highly correlated, so we can eliminate medAge2007 because it has a lot of missing observations.
 
 Gini_Index and pct_poverty are highly correlated, so we can eliminate Gini_Index because it has a lot of missing observations.
@@ -139,9 +143,11 @@ ggplot(data = mn08, mapping = aes(x = unemp_rate)) + geom_histogram() + labs(tit
 ggplot(data = mn08, mapping = aes(x = pct_poverty)) + geom_histogram() + labs(title = "Distribution of People Living Below Poverty Line")
 
 ggplot(data = mn08, mapping = aes(x = medAge2000)) + geom_histogram() + labs(title = "Distribution of Median Age in 2000")
+
+ggplot(data = mn08, mapping = aes(x = total_votes)) + geom_histogram() + labs(title = "Distribution of Total Votes")
 ```
 
-The distributions for median household income and unemployment rate are skewed right, while the distributions for people living below poverty line and median age are relatively normally distributed.
+The distributions for median household income and unemployment rate are skewed right due to the relatively fewer counties with high income and high unemployment rate, some of which are potential outliers. The distribution for total votes is strongly skewed right due to a few cities in Minnesota that are very high outliers. The distributions for people living below poverty line and median age are relatively normally distributed.
 
 ##### Bivariate Analysis
 Created box plots to visualize quantitative predictor variables vs. categorical response variable of whether or not Obama won majority vote.
@@ -161,26 +167,36 @@ mn08 %>%
 mn08 %>%
   group_by(obama_win) %>%
   ggplot(mapping = aes(x = factor(obama_win), y = medAge2000)) + geom_boxplot() + labs(title = "Median Age in 2000 vs. Obama Majority Win", y = "Median Age in 2000", x = "Obama Majority Win")
+
+mn08 %>%
+  group_by(obama_win) %>%
+  ggplot(mapping = aes(x = factor(obama_win), y = total_votes)) + geom_boxplot() + labs(title = "Total Votes vs. Obama Majority Win", y = "Total Votes", x = "Obama Majority Win")
 ```
+
+From the boxplots, we see that counties where Obama won the majority vote had lower medians for median household income, unemployment rate, and total votes, but had higher medians for percent of people living below poverty line and median age in 2000. The spreads for the predictor variables (indicated by IQR) are relatively equal for all variables except median age in 2000, where median age for counties where Obama won has a much wider spread.
 
 #### Model Fitting
 ```{r model}
-full_model <- glm(obama_win ~ pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2000, data = mn08)
+full_model <- glm(obama_win ~ pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2000 + total_votes, data = mn08, family = binomial)
 kable(tidy(full_model,conf.int=TRUE),digits=5)
 ```
-obama_win-hat = -1.87864 + 0.00026 * pct_rural + 0.00002 * medHHinc - 0.07876 * unemp_rate + 0.07301 * pct_poverty + 0.03443 * medAge2000
+
+obama_win-hat = -7.07635 + 0.00816 * pct_rural + 0.00003 * medHHinc -0.36483 * unemp_rate + 0.24723 * pct_poverty + 0.11598 * medAge2000 + 0.00001 * total_votes
 
 ```{r backward}
 regfit_backward <- step(full_model, direction = "backward")
 ```
 
+We conduct backwards selection using AIC to select the model with the lowest AIC. This final model includes the predictor variables medAge2000, unemp_rate, total_votes, and pct_poverty.
+
 ```{r final-model}
-final_model <- glm(obama_win ~ unemp_rate + pct_poverty, data = mn08)
+final_model <- glm(obama_win ~ medAge2000 + unemp_rate + total_votes + pct_poverty, data = mn08)
 kable(tidy(final_model,conf.int=TRUE),digits=5)
 ```
 
-obama_win-hat = 0.4665 - 0.0706 * unemp_rate + 0.0429 * pct_poverty
+obama_win-hat = -0.35044 + 0.02176 * medAge2000 - 0.0719 * unemp_rate + 	0.000001 * total_votes + 0.03892 * pct_poverty
 
+#### Model Assessment
 ```{r augment}
 model_aug <- augment(final_model)
 ```
@@ -193,11 +209,27 @@ arm::binnedplot(x = model_aug$.fitted,
                 col.int = FALSE)
 ```
 
+```{r medage-resid}
+arm::binnedplot(x = model_aug$unemp_rate,
+                y = model_aug$.resid,
+                xlab= "Median Age in 2000",
+                main = "Binned Residuals vs. Median Age in 2000",
+                col.int = FALSE)
+```
+
 ```{r unemp-resid}
 arm::binnedplot(x = model_aug$unemp_rate,
                 y = model_aug$.resid,
                 xlab= "Unemployment Rate",
                 main = "Binned Residuals vs. Unemployment Rate",
+                col.int = FALSE)
+```
+
+```{r votes-resid}
+arm::binnedplot(x = model_aug$unemp_rate,
+                y = model_aug$.resid,
+                xlab= "Total Votes",
+                main = "Binned Residuals vs. Total Votes",
                 col.int = FALSE)
 ```
 
@@ -209,13 +241,13 @@ arm::binnedplot(x = model_aug$pct_poverty,
                 col.int = FALSE)
 ```
 
-The binned residuals across predicted probabilities and the quantitiative predictor variables in the final model (unemp_rate and pct_poverty) are randomly distributed around 0 and have small magnitudes. Thus, the final model is an appropriate fit for the data.
+The binned residuals vs. predicted probabilities and the continuous quantitiative predictor variables in the final model (medAge2000, unemp_rate, total_votes, and pct_poverty) are randomly scattered around 0 and have small magnitudes close to 0. Thus, the final model is an appropriate fit for the data.
 
 #### Analysis
 ```{r roc}
 library(plotROC)
 roccurve <- ggplot(model_aug, aes(d = as.numeric(obama_win), m = .fitted)) +
-geom_roc(n.cuts = 5, labelround = 3) + geom_abline(intercept = 0)
+geom_roc(n.cuts = 5, labelround = 3) + geom_abline(intercept = 0) + labs(title = "ROC Curve")
 roccurve
 ```
 
@@ -223,7 +255,9 @@ roccurve
 calc_auc(roccurve)$AUC
 ```
 
-From the model, we decide on a threshold probability of 0.479, with a false positive rate of 0.4 and a true positive rate of 0.6 because this is the point on the ROC curve closest to the top left corner (true positive rate of 1).
+From the model, we decide on a threshold probability of 0.503, with a false positive rate of 0.4 and a true positive rate of 0.6 because this is the point on the ROC curve closest to the top left corner (true positive rate of 1).
+
+In the 2020 election, if the predicted probability of the Democratic candidate winning in a county is above 0.503, the candidate should allocate resources to trying to win that county. However, if the predicted probability of the Democratic candidate winning in a county is below 0.503, the candidate should allocate little to no resources since they are not likely to win the majority vote.
 
 ### Overall
 

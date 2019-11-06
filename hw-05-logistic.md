@@ -418,11 +418,73 @@ final_model <- glm(obama_win ~ unemp_rate + pct_poverty, data = mn08)
 kable(tidy(final_model,conf.int=TRUE),digits=5)
 ```
 
-|       term       |   estimate    |    std.error    |   statistic    |   p.value    |  conf.low   | conf.high |
-| :--------------: | :-----------: | :-------------: | :------------: | :----------: | :---------: | :-------: |
-|   (Intercept)    |   0.4664885   |    0.2636848    |    1.769114    |  0.0805045   | \-0.0503243 | 0.9833013 |
-|   unemp\_rate    |  \-0.0705809  |    0.0383348    |   \-1.841170   |  0.0691267   | \-0.1457158 | 0.0045539 |
-|   pct\_poverty   |   0.0429192   |    0.0191188    |    2.244869    |  0.0274043   |  0.0054470  | 0.0803914 |
-| obama\_win-hat = | 0.4665 - 0.07 | 06 \* unemp\_ra | te + 0.0429 \* | pct\_poverty |             |           |
+|     term     |  estimate   | std.error | statistic  |  p.value  |  conf.low   | conf.high |
+| :----------: | :---------: | :-------: | :--------: | :-------: | :---------: | :-------: |
+| (Intercept)  |  0.4664885  | 0.2636848 |  1.769114  | 0.0805045 | \-0.0503243 | 0.9833013 |
+| unemp\_rate  | \-0.0705809 | 0.0383348 | \-1.841170 | 0.0691267 | \-0.1457158 | 0.0045539 |
+| pct\_poverty |  0.0429192  | 0.0191188 |  2.244869  | 0.0274043 |  0.0054470  | 0.0803914 |
+
+obama\_win-hat = 0.4665 - 0.0706 \* unemp\_rate + 0.0429 \* pct\_poverty
+
+``` r
+model_aug <- augment(final_model)
+```
+
+``` r
+arm::binnedplot(x = model_aug$.fitted,
+                y=model_aug$.resid,
+                xlab="Predicted Probabilities",
+                main = "Binned Residuals vs. Predicted Probabilities",
+                col.int = FALSE)
+```
+
+![](hw-05-logistic_files/figure-gfm/binned-resid-1.png)<!-- -->
+
+``` r
+arm::binnedplot(x = model_aug$unemp_rate,
+                y = model_aug$.resid,
+                xlab= "Unemployment Rate",
+                main = "Binned Residuals vs. Unemployment Rate",
+                col.int = FALSE)
+```
+
+![](hw-05-logistic_files/figure-gfm/unemp-resid-1.png)<!-- -->
+
+``` r
+arm::binnedplot(x = model_aug$pct_poverty,
+                y = model_aug$.resid,
+                xlab= "Percent Below Poverty Line",
+                main = "Binned Residuals vs. Poverty Rate",
+                col.int = FALSE)
+```
+
+![](hw-05-logistic_files/figure-gfm/poverty-resid-1.png)<!-- -->
+
+The binned residuals across predicted probabilities and the
+quantitiative predictor variables in the final model (unemp\_rate and
+pct\_poverty) are randomly distributed around 0 and have small
+magnitudes. Thus, the final model is an appropriate fit for the data.
+
+#### Analysis
+
+``` r
+library(plotROC)
+roccurve <- ggplot(model_aug, aes(d = as.numeric(obama_win), m = .fitted)) +
+geom_roc(n.cuts = 5, labelround = 3) + geom_abline(intercept = 0)
+roccurve
+```
+
+![](hw-05-logistic_files/figure-gfm/roc-1.png)<!-- -->
+
+``` r
+calc_auc(roccurve)$AUC
+```
+
+    ## [1] 0.6449735
+
+From the model, we decide on a threshold probability of 0.479, with a
+false positive rate of 0.4 and a true positive rate of 0.6 because thsi
+is the point on the ROC curve closest to the top left corner (true
+positive rate of 1).
 
 ### Overall

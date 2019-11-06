@@ -178,7 +178,52 @@ regfit_backward <- step(full_model, direction = "backward")
 final_model <- glm(obama_win ~ unemp_rate + pct_poverty, data = mn08)
 kable(tidy(final_model,conf.int=TRUE),digits=5)
 ```
+
 obama_win-hat = 0.4665 - 0.0706 * unemp_rate + 0.0429 * pct_poverty
+
+```{r augment}
+model_aug <- augment(final_model)
+```
+
+```{r binned-resid}
+arm::binnedplot(x = model_aug$.fitted,
+                y=model_aug$.resid,
+                xlab="Predicted Probabilities",
+                main = "Binned Residuals vs. Predicted Probabilities",
+                col.int = FALSE)
+```
+
+```{r unemp-resid}
+arm::binnedplot(x = model_aug$unemp_rate,
+                y = model_aug$.resid,
+                xlab= "Unemployment Rate",
+                main = "Binned Residuals vs. Unemployment Rate",
+                col.int = FALSE)
+```
+
+```{r poverty-resid}
+arm::binnedplot(x = model_aug$pct_poverty,
+                y = model_aug$.resid,
+                xlab= "Percent Below Poverty Line",
+                main = "Binned Residuals vs. Poverty Rate",
+                col.int = FALSE)
+```
+
+The binned residuals across predicted probabilities and the quantitiative predictor variables in the final model (unemp_rate and pct_poverty) are randomly distributed around 0 and have small magnitudes. Thus, the final model is an appropriate fit for the data.
+
+#### Analysis
+```{r roc}
+library(plotROC)
+roccurve <- ggplot(model_aug, aes(d = as.numeric(obama_win), m = .fitted)) +
+geom_roc(n.cuts = 5, labelround = 3) + geom_abline(intercept = 0)
+roccurve
+```
+
+```{r auc}
+calc_auc(roccurve)$AUC
+```
+
+From the model, we decide on a threshold probability of 0.479, with a false positive rate of 0.4 and a true positive rate of 0.6 because thsi is the point on the ROC curve closest to the top left corner (true positive rate of 1).
 
 ### Overall
 

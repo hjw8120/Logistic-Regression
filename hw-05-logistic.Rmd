@@ -19,6 +19,7 @@ library(knitr)
 library(broom)
 library(pROC)
 library(skimr)
+library(rms)
 ```
 
 ```{r load-data}
@@ -95,6 +96,14 @@ mn08 <- mn08 %>%
                                pct_Obama <= 50 ~ 0))
 ```
 
+```{r prop}
+mn08 %>%
+  count(obama_win) %>%
+  mutate(prop = n/sum(n))
+```
+
+Out of the 87 counties in Minnesota, Obama won the majority vote in 42 and lost in 45. He won in 0.48 of the counties and lost in 0.52 of the counties.
+
 #### Exploratory Data Analysis
 Initially, we can eliminate the variables County, Obama, McCain, pct_Obama. County is just the identifier for the the observations. Obama, McCain, and pct_Obama are the variables used to calculate the response variable (whether Obama won) so they would directly predict the response.
 
@@ -113,7 +122,7 @@ Gini_Index, medAge2007, and pct_native have 40 missing observations, so we shoul
 
 We created a pairs plot and correlation matrix to examine the correlation between the predictor variables and see if there are any potential multicollinearities.
 
-```{r pairs}
+```{r pairs1}
 pairs(data = mn08, obama_win ~ pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2007 + medAge2000 + Gini_Index + pct_native + total_votes, lower.panel = NULL)
 ```
 
@@ -187,7 +196,7 @@ obama_win-hat = -7.07635 + 0.00816 * pct_rural + 0.00003 * medHHinc -0.36483 * u
 regfit_backward <- step(full_model, direction = "backward")
 ```
 
-We conduct backwards selection using AIC to select the model with the lowest AIC. This final model includes the predictor variables medAge2000, unemp_rate, total_votes, and pct_poverty.
+We conduct backwards selection using AIC to select the model with the lowest AIC. In this case, since the number of predictor variables is not greater than 8, using BIC (which penalizes for n>8 to favor more parsimonious models) would not make much of a difference. This final model includes the predictor variables medAge2000, unemp_rate, total_votes, and pct_poverty.
 
 ```{r final-model}
 final_model <- glm(obama_win ~ medAge2000 + unemp_rate + total_votes + pct_poverty, data = mn08)
@@ -197,6 +206,11 @@ kable(tidy(final_model,conf.int=TRUE),digits=5)
 obama_win-hat = -0.35044 + 0.02176 * medAge2000 - 0.0719 * unemp_rate + 	0.000001 * total_votes + 0.03892 * pct_poverty
 
 #### Model Assessment
+We look at the variance inflation factor (VIF) to detect multicollinearity. None of the VIFs are greater than 10, so we do not have multicollinearity in the final model. 
+```{r vif}
+tidy(vif(final_model))
+```
+
 ```{r augment}
 model_aug <- augment(final_model)
 ```
@@ -210,7 +224,7 @@ arm::binnedplot(x = model_aug$.fitted,
 ```
 
 ```{r medage-resid}
-arm::binnedplot(x = model_aug$unemp_rate,
+arm::binnedplot(x = model_aug$medAge2000,
                 y = model_aug$.resid,
                 xlab= "Median Age in 2000",
                 main = "Binned Residuals vs. Median Age in 2000",
@@ -226,7 +240,7 @@ arm::binnedplot(x = model_aug$unemp_rate,
 ```
 
 ```{r votes-resid}
-arm::binnedplot(x = model_aug$unemp_rate,
+arm::binnedplot(x = model_aug$total_votes,
                 y = model_aug$.resid,
                 xlab= "Total Votes",
                 main = "Binned Residuals vs. Total Votes",
@@ -241,7 +255,7 @@ arm::binnedplot(x = model_aug$pct_poverty,
                 col.int = FALSE)
 ```
 
-The binned residuals vs. predicted probabilities and the continuous quantitiative predictor variables in the final model (medAge2000, unemp_rate, total_votes, and pct_poverty) are randomly scattered around 0 and have small magnitudes close to 0. Thus, the final model is an appropriate fit for the data.
+The binned residuals vs. predicted probabilities and binned residuals vs. medAge2000, unemp_rate, and pct_poverty are randomly scattered around 0 and have small magnitudes close to 0 so they do not violate linearity. The binned residuals vs. total_votes has a high outlier which could be evaluated in further studies. However, overall, the final model does not violate any assumptions, making it an appropriate fit for the data.
 
 #### Analysis
 ```{r roc}
@@ -255,9 +269,11 @@ roccurve
 calc_auc(roccurve)$AUC
 ```
 
-From the model, we decide on a threshold probability of 0.503, with a false positive rate of 0.4 and a true positive rate of 0.6 because this is the point on the ROC curve closest to the top left corner (true positive rate of 1).
+The area under the ROC curve indicates how likely you are able to differentiate between trues and falses (predicting a win correctly vs. predicting a win incorrectly). A logistic model fits well if the AUC is close to 1. For predicting situations as complex as political elections, 0.68 is a relatively high proportion, showing the model decently differentiates between predicting wins.
 
-In the 2020 election, if the predicted probability of the Democratic candidate winning in a county is above 0.503, the candidate should allocate resources to trying to win that county. However, if the predicted probability of the Democratic candidate winning in a county is below 0.503, the candidate should allocate little to no resources since they are not likely to win the majority vote.
+From the model, we decide on a threshold probability of 0.503, with a false positive rate (incorrectly predict Obama's win) of 0.4 and a true positive rate (correctly predict Obama's win) of 0.6 because this is the point on the ROC curve closest to the top left corner (true positive rate of 1) where all wins for Obama are predicted correctly.
+
+In the 2020 election, if the predicted probability of the Democratic candidate winning in a county is above the threshold of 0.503, the candidate should allocate resources to trying to win that county. However, if the predicted probability of the Democratic candidate winning in a county is below 0.503, the candidate should allocate little to no resources since they are not likely to win the majority vote.
 
 ### Overall
 

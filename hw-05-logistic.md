@@ -64,17 +64,15 @@ The odds ratios for successful penalty kicks for behind versus tied is
 
 The odds of children in day care centers getting nightly cough is
 expected to be, on average, 1.89 times the odds of children in home care
-getting nightly cough. We are 95% confident that the true odds ratio
-lies between 1.34 and 1.67, meaning we are 95% confident that the odds
-of children in day care centers getting nightly cough is 1.34 to 1.67
-times the odds of children in home care getting nightly cough.
+getting nightly cough. We are 95% confident that the interval 1.34 to
+1.67 contains the true odds ratio of children getting nightly cough in
+day care centers vs. in home care centers.
 
 The odds of children getting a blocked or runny nose without common cold
 in day care is expected to be, on average, 1.55 times the odds of
-getting it in home care. We are 95% confident that the true odds ratio
-lies between 1.07 and 1.61, meaning we are 95% confident that the odds
-of children getting a blocked or runny nose without common cold in day
-care is 1.07 to 1.61 times the odds of getting it in home care.
+getting it in home care. We are 95% confident that the interval 1.07 to
+1.61 contains the true odds ratio of children getting blocked or runny
+nose without a common cold in day care centers vs. in home care centers.
 
 ### Question 3
 
@@ -149,6 +147,12 @@ mn08 <- mn08 %>%
 ```
 
 ``` r
+ggplot(data = mn08, mapping = aes(x = factor(obama_win), stat = "identity")) + geom_bar() + labs(title = "Distribution of Whether Obama Won", x = "Obama Majority Win", y = "Proportion")
+```
+
+![](hw-05-logistic_files/figure-gfm/bar-1.png)<!-- -->
+
+``` r
 mn08 %>%
   count(obama_win) %>%
   mutate(prop = n/sum(n))
@@ -191,13 +195,13 @@ skim(mn08)
     ##  n obs: 87 
     ##  n variables: 14 
     ## 
-    ## ── Variable type:factor ───────────────────────────────────────────────────────────
+    ## ── Variable type:factor ──────────────────────────────────────────────────────
     ##  variable missing complete  n n_unique                     top_counts
     ##    County       0       87 87       87 Ait: 1, Ano: 1, Bec: 1, Bel: 1
     ##  ordered
     ##    FALSE
     ## 
-    ## ── Variable type:integer ──────────────────────────────────────────────────────────
+    ## ── Variable type:integer ─────────────────────────────────────────────────────
     ##     variable missing complete  n     mean       sd    p0     p25   p50
     ##       McCain       0       87 87 14659.77 30265.89   843  2815.5  6315
     ##     medHHinc       0       87 87 47813.24  9902.28 34503 41954   44602
@@ -209,7 +213,7 @@ skim(mn08)
     ##  11812 420958 ▇▁▁▁▁▁▁▁
     ##  21611 652015 ▇▁▁▁▁▁▁▁
     ## 
-    ## ── Variable type:numeric ──────────────────────────────────────────────────────────
+    ## ── Variable type:numeric ─────────────────────────────────────────────────────
     ##     variable missing complete  n  mean    sd    p0   p25   p50   p75
     ##   Gini_Index      40       47 87  0.4   0.03  0.34  0.39  0.4   0.42
     ##   medAge2000       0       87 87 38.13  3.58 29.9  35.2  38.4  40.65
@@ -301,39 +305,96 @@ variables.
 ggplot(data = mn08, mapping = aes(x = medHHinc)) + geom_histogram() + labs(title = "Distribution of Median Household Income")
 ```
 
-![](hw-05-logistic_files/figure-gfm/histograms-1.png)<!-- -->
+![](hw-05-logistic_files/figure-gfm/medhhinc-hist-1.png)<!-- -->
+
+``` r
+mn08 %>%
+  summarise(med = median(medHHinc), IQR = IQR(medHHinc))
+```
+
+    ##     med  IQR
+    ## 1 44602 7948
+
+The distribution of median household income is unimodal and skewed
+right, centered around $44,602 with an IQR of $7,948. There appear to be
+potential outliers for counties with very high median household
+incomes.
 
 ``` r
 ggplot(data = mn08, mapping = aes(x = unemp_rate)) + geom_histogram() + labs(title = "Distribution of Unemployment Rate")
 ```
 
-![](hw-05-logistic_files/figure-gfm/histograms-2.png)<!-- -->
+![](hw-05-logistic_files/figure-gfm/unemp-hist-1.png)<!-- -->
+
+``` r
+mn08 %>%
+  summarise(med = median(unemp_rate), IQR = IQR(unemp_rate))
+```
+
+    ##   med  IQR
+    ## 1 5.7 1.75
+
+The distribution of unemployment rate is unimodal and skewed right,
+centered around 5.7% with an IQR of 1.75%. There appear to be potential
+outliers for counties with high unemployment
+rates.
 
 ``` r
 ggplot(data = mn08, mapping = aes(x = pct_poverty)) + geom_histogram() + labs(title = "Distribution of People Living Below Poverty Line")
 ```
 
-![](hw-05-logistic_files/figure-gfm/histograms-3.png)<!-- -->
+![](hw-05-logistic_files/figure-gfm/pov-hist-1.png)<!-- -->
+
+``` r
+mn08 %>%
+  summarise(med = median(pct_poverty), IQR = IQR(pct_poverty))
+```
+
+    ##    med IQR
+    ## 1 10.3 3.2
+
+The distribution of percent of people living below the poverty line is
+unimodal and relatively normal, centered around 10.3% with an IQR of
+3.2%. There do not appear to be any
+outliers.
 
 ``` r
 ggplot(data = mn08, mapping = aes(x = medAge2000)) + geom_histogram() + labs(title = "Distribution of Median Age in 2000")
 ```
 
-![](hw-05-logistic_files/figure-gfm/histograms-4.png)<!-- -->
+![](hw-05-logistic_files/figure-gfm/age-hist-1.png)<!-- -->
+
+``` r
+mn08 %>%
+  summarise(med = median(medAge2000), IQR = IQR(medAge2000))
+```
+
+    ##    med  IQR
+    ## 1 38.4 5.45
+
+The distribution of median age in 2000 is unimodal and relatively
+normal, centered around 38.4 with an IQR of 5.45. There do not appear to
+be any potential
+outliers.
 
 ``` r
 ggplot(data = mn08, mapping = aes(x = total_votes)) + geom_histogram() + labs(title = "Distribution of Total Votes")
 ```
 
-![](hw-05-logistic_files/figure-gfm/histograms-5.png)<!-- -->
+![](hw-05-logistic_files/figure-gfm/votes-hist-1.png)<!-- -->
 
-The distributions for median household income and unemployment rate are
-skewed right due to the relatively fewer counties with high income and
-high unemployment rate, some of which are potential outliers. The
-distribution for total votes is strongly skewed right due to a few
-cities in Minnesota that are very high outliers. The distributions for
-people living below poverty line and median age are relatively normally
-distributed.
+``` r
+mn08 %>%
+  summarise(med = median(total_votes), IQR = IQR(total_votes))
+```
+
+    ##     med   IQR
+    ## 1 11581 15908
+
+The distribution for total votes is strongly skewed right, centered at
+11,581 with an IQR of 15,908. There are potential high outliers from
+counties in Minnesota that have a large number of total votes, possibly
+due to the counties containing major cities.
 
 ##### Bivariate Analysis
 
@@ -387,10 +448,12 @@ and total votes, but had higher medians for percent of people living
 below poverty line and median age in 2000. The spreads for the predictor
 variables (indicated by IQR) are relatively equal for all variables
 except median age in 2000, where median age for counties where Obama won
-has a much wider
-spread.
+has a much wider spread.
 
 #### Model Fitting
+
+Fit a full logistic regression
+model:
 
 ``` r
 full_model <- glm(obama_win ~ pct_rural + medHHinc + unemp_rate + pct_poverty + medAge2000 + total_votes, data = mn08, family = binomial)
@@ -451,12 +514,14 @@ regfit_backward <- step(full_model, direction = "backward")
     ## - pct_poverty  1   113.76 121.76
 
 We conduct backwards selection using AIC to select the model with the
-lowest AIC. In this case, since the number of predictor variables is not
-greater than 8, using BIC (which penalizes for n\>8 to favor more
-parsimonious models) would not make much of a difference. This final
-model includes the predictor variables medAge2000, unemp\_rate,
-total\_votes, and
-pct\_poverty.
+lowest AIC (AIC = 119.14). In this case, since the number of predictor
+variables is not greater than 8, using BIC (which penalizes for n\>8 to
+favor more parsimonious models) would not make much of a difference.
+This final model includes the predictor variables medAge2000,
+unemp\_rate, total\_votes, and pct\_poverty.
+
+Fit our final logistic regression
+model:
 
 ``` r
 final_model <- glm(obama_win ~ medAge2000 + unemp_rate + total_votes + pct_poverty, data = mn08)
@@ -491,6 +556,9 @@ tidy(vif(final_model))
     ## 2 unemp_rate   1.12
     ## 3 total_votes  1.11
     ## 4 pct_poverty  1.14
+
+We also look at the binned residual plots of predicted probabilities and
+predictor variables.
 
 ``` r
 model_aug <- augment(final_model)
@@ -546,20 +614,27 @@ arm::binnedplot(x = model_aug$pct_poverty,
 
 ![](hw-05-logistic_files/figure-gfm/poverty-resid-1.png)<!-- -->
 
-The binned residuals vs. predicted probabilities and binned residuals
-vs. medAge2000, unemp\_rate, and pct\_poverty are randomly scattered
-around 0 and have small magnitudes close to 0 so they do not violate
-linearity. The binned residuals vs. total\_votes has a high outlier
-which could be evaluated in further studies. However, overall, the final
-model does not violate any assumptions, making it an appropriate fit for
-the data.
+Linearity is satisfied because the binned residuals vs. predicted
+probabilities and binned residuals vs. medAge2000, unemp\_rate, and
+pct\_poverty are randomly scattered around 0 and have small magnitudes
+close to 0 (there are no distinguishible patterns in the binned residual
+plots). There are no categorical predictor variables in our final model,
+so we do not need to check the mean residual values for any predictors.
+The binned residuals vs. total\_votes has a high outlier which could be
+evaluated in further studies. However, overall, the final model does not
+violate any assumptions, making it an appropriate fit for the data.
+
+Independence is satisfied because in Minnesota, counties do not affect
+each others’ votes. Nationally, there may be factors causing certain
+states to be biased in political leanings and candidate votes, but in
+such a concentrated state, there are no dependencies between counties.
 
 #### Analysis
 
 ``` r
 library(plotROC)
 roccurve <- ggplot(model_aug, aes(d = as.numeric(obama_win), m = .fitted)) +
-geom_roc(n.cuts = 5, labelround = 3) + geom_abline(intercept = 0) + labs(title = "ROC Curve")
+geom_roc(n.cuts = 10, labelround = 3) + geom_abline(intercept = 0) + labs(title = "ROC Curve")
 roccurve
 ```
 
@@ -571,24 +646,22 @@ calc_auc(roccurve)$AUC
 
     ## [1] 0.6814815
 
-The area under the ROC curve indicates how likely you are able to
-differentiate between trues and falses (predicting a win correctly
-vs. predicting a win incorrectly). A logistic model fits well if the
-AUC is close to 1. For predicting situations as complex as political
-elections, 0.68 is a relatively high proportion, showing the model
-decently differentiates between predicting wins.
+Since the AUC value is 0.68 (which is more than 0.5 and fairly close to
+1), the logistic model does a relatively good job of predicting whether
+or not Obama will win.
 
-From the model, we decide on a threshold probability of 0.503, with a
-false positive rate (incorrectly predict Obama’s win) of 0.4 and a true
-positive rate (correctly predict Obama’s win) of 0.6 because this is the
-point on the ROC curve closest to the top left corner (true positive
-rate of 1) where all wins for Obama are predicted correctly.
+From the model, we decide on a threshold probability of 0.486, with a
+false positive rate (incorrectly predict Obama’s win) of about 0.4 and a
+true positive rate (correctly predict Obama’s win) of about 0.7 because
+this is the point on the ROC curve closest to the top left corner (true
+positive rate of 1, where all wins for Obama are predicted correctly),
+with high sensitivity and low 1-specificity.
 
 In the 2020 election, if the predicted probability of the Democratic
-candidate winning in a county is above the threshold of 0.503, the
+candidate winning in a county is above the threshold of 0.486, the
 candidate should allocate resources to trying to win that county.
 However, if the predicted probability of the Democratic candidate
-winning in a county is below 0.503, the candidate should allocate little
+winning in a county is below 0.486, the candidate should allocate little
 to no resources since they are not likely to win the majority vote.
 
 ### Overall
